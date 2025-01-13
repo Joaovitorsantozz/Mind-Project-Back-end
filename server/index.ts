@@ -1,13 +1,13 @@
 import express from 'express';
 import mySql2, { RowDataPacket } from "mysql2";
 import multer from 'multer';
-
+import jwt, { JwtPayload } from 'jsonwebtoken';
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
 const app = express();
-const jwt = require("jsonwebtoken");
+
 
 
 app.use(express.json());
@@ -28,8 +28,8 @@ type Produto = {
     preco: number;
     data: string;
 };
-interface QueryResult{
-    rows:Produto[];
+interface QueryResult {
+    rows: Produto[];
 }
 app.post("/register", (req, res) => {
     const email = req.body.email;
@@ -58,7 +58,7 @@ app.post("/register", (req, res) => {
     });
 });
 
-app.post("/login", (req, res) => {
+app.post("/login",authenticateToken, (req, res) => {
 
     const email = req.body.email;
     const password = req.body.password;
@@ -87,7 +87,7 @@ app.post("/login", (req, res) => {
     });
 });
 
-app.post("/dashboard", upload.single("imagem"), (req, res) => {
+app.post("/dashboard",authenticateToken, upload.single("imagem"), (req, res) => {
     const { nome, preco, categoria, quantidade, dataFabricacao } = req.body;
     const imagem = req.file;
 
@@ -102,8 +102,31 @@ app.post("/dashboard", upload.single("imagem"), (req, res) => {
         })
 })
 
+function authenticateToken(req: any, res: any, next: any) {
+   
+    const token = req.headers['authorization'];
 
-app.get("/dashboard", (req, res) => {
+   
+    if (!token) {
+        return res.status(401).json({ message: "Token não fornecido" });
+    }
+
+ 
+    const tokenSemPrefixo = token.replace("Bearer ", "");
+
+    
+    jwt.verify(tokenSemPrefixo, "sua-chave-secreta", (err:any, decoded:any) => {
+     
+        if (err) {
+            return res.status(403).json({ message: "Token inválido" });
+        }
+
+     
+        req.user = decoded as JwtPayload; 
+        next(); 
+    });
+}
+app.get("/dashboard", authenticateToken,(req, res) => {
     db.query("SELECT * FROM produtos", (erro, resultados: any[]) => {
         if (erro) {
             console.log(erro);
@@ -120,7 +143,7 @@ app.get("/dashboard", (req, res) => {
     })
 })
 
-app.get("/produto/:id", (req, res) => {
+app.get("/produto/:id",authenticateToken, (req, res) => {
     const { id } = req.params;
 
     // Consulta ao banco de dados
