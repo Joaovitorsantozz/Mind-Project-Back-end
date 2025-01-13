@@ -1,15 +1,22 @@
 import express from 'express';
 import mySql2, { RowDataPacket } from "mysql2";
+import multer from 'multer';
 
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
+
 const app = express();
 const jwt = require("jsonwebtoken");
 
 
 app.use(express.json());
 app.use(cors());
+
+const storage = multer.memoryStorage();
+const upload = multer({
+    limits: { fileSize: 50 * 1024 * 1024 }  // Limite de 50MB
+});
 
 
 app.post("/register", (req, res) => {
@@ -57,7 +64,7 @@ app.post("/login", (req, res) => {
                 if (result) {
                     const token = jwt.sign({ id: 1, email }, "sua-chave-secreta", { expiresIn: "1h" });
                     return res.json({ msg: "Logado com sucesso", token });
-                
+
                 } else {
                     res.send({ msg: "Falha no Login" })
                 }
@@ -68,7 +75,25 @@ app.post("/login", (req, res) => {
     });
 });
 
+app.post("/dashboard", upload.single("imagem"), (req, res) => {
+    const { nome, preco, categoria, quantidade, dataFabricacao } = req.body;
+    const imagem = req.file;
 
+    
+    db.query("INSERT INTO produtos (nome,categoria,datafabricacao,quantidade,image,preço) VALUES (?,?,?,?,?,?)",
+        [nome, categoria, dataFabricacao, quantidade, imagem?.buffer, preco], (erro, resultado) => {
+            if (erro) {
+                console.log(erro);
+                return res.status(500).send("Erro ao cadastrar item no banco de dados.");
+            }
+            res.send("item cadastrado no banco de dados");
+        })
+})
+
+
+app.get("/dashboard",(req,res)=>{
+    
+})
 const db = mySql2.createPool({
     host: "localhost",
     user: "root",
