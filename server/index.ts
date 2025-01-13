@@ -58,7 +58,7 @@ app.post("/register", (req, res) => {
     });
 });
 
-app.post("/login",authenticateToken, (req, res) => {
+app.post("/login", (req, res) => {
 
     const email = req.body.email;
     const password = req.body.password;
