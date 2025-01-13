@@ -142,7 +142,9 @@ app.get("/dashboard", authenticateToken,(req, res) => {
 
     })
 })
-
+app.post("/editar",(req,res){
+    
+})
 app.get("/produto/:id",authenticateToken, (req, res) => {
     const { id } = req.params;
 
