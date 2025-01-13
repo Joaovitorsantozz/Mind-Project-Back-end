@@ -79,7 +79,7 @@ app.post("/dashboard", upload.single("imagem"), (req, res) => {
     const { nome, preco, categoria, quantidade, dataFabricacao } = req.body;
     const imagem = req.file;
 
-    
+
     db.query("INSERT INTO produtos (nome,categoria,datafabricacao,quantidade,image,preço) VALUES (?,?,?,?,?,?)",
         [nome, categoria, dataFabricacao, quantidade, imagem?.buffer, preco], (erro, resultado) => {
             if (erro) {
@@ -91,8 +91,21 @@ app.post("/dashboard", upload.single("imagem"), (req, res) => {
 })
 
 
-app.get("/dashboard",(req,res)=>{
-    
+app.get("/dashboard", (req, res) => {
+    db.query("SELECT * FROM produtos",(erro,resultados:any[])=>{
+        if(erro){
+            console.log(erro);
+            return res.status(500).send("Erro ao procurar os produtos");
+        }
+
+        const produtosImagem=resultados.map(produto=>{
+            const imageBase64=produto.image.toString('base64');
+            produto.imagem=`data:image/jpeg;base64,${imageBase64}`;
+            return produto;
+        })
+        res.json(produtosImagem);
+
+    })
 })
 const db = mySql2.createPool({
     host: "localhost",
