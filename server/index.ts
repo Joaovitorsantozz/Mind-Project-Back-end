@@ -146,7 +146,7 @@ app.get("/dashboard", authenticateToken,(req, res) => {
 app.get("/produto/:id",authenticateToken, (req, res) => {
     const { id } = req.params;
 
-    // Consulta ao banco de dados
+  
     db.query("SELECT * FROM produtos WHERE id=?", [id], (erro, resultados: RowDataPacket[]) => {
         if (erro) {
             console.error("Erro na consulta:", erro);
@@ -155,22 +155,21 @@ app.get("/produto/:id",authenticateToken, (req, res) => {
 
         console.log("Resultados da consulta:", resultados);
 
-        // Verifica se há resultados
+       
         if (resultados.length === 0) {
             return res.status(404).send("Produto não encontrado");
         }
 
-        // Converte a imagem do produto
+      
         const produtosImagem = resultados.map(produto => {
             console.log("Produto antes de converter imagem:", produto);
 
-            // Verifica se `image` é um Buffer
             if (produto.image && Buffer.isBuffer(produto.image)) {
                 const imageBase64 = produto.image.toString('base64');
                 produto.image = `data:image/jpeg;base64,${imageBase64}`;
             } else {
                 console.warn(`Imagem ausente ou inválida para o produto ID ${produto.id}`);
-                produto.image = null; // Para evitar erros no frontend
+                produto.image = null; 
             }
 
             return produto;
@@ -178,10 +177,11 @@ app.get("/produto/:id",authenticateToken, (req, res) => {
 
         console.log("Produtos com imagem convertida:", produtosImagem);
 
-        // Retorna o primeiro produto (considerando busca por ID)
+        
         res.json(produtosImagem[0]);
     });
 });
+
 
 const db = mySql2.createPool({
     host: "localhost",
