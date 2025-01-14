@@ -6,13 +6,15 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
-
+const bodyParser = require('body-parser');
 const app = express();
 
 
 
 app.use(express.json());
 app.use(cors());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -93,7 +95,7 @@ app.post("/dashboard", authenticateToken, upload.single("imagem"), (req, res) =>
     const imagem = req.file;
 
 
-    db.query("INSERT INTO produtos (nome,categoria,datafabricacao,quantidade,image,preço) VALUES (?,?,?,?,?,?)",
+    db.query("INSERT INTO produtos (nome,categoria,datafabricacao,quantidade,image,preco) VALUES (?,?,?,?,?,?)",
         [nome, categoria, dataFabricacao, quantidade, imagem?.buffer, preco], (erro, resultado) => {
             if (erro) {
                 console.log(erro);
@@ -102,6 +104,21 @@ app.post("/dashboard", authenticateToken, upload.single("imagem"), (req, res) =>
             res.send("item cadastrado no banco de dados");
         })
 })
+
+app.post("/editar", upload.none(), (req, res) => {
+    const { nome, preco, categoria, quantidade, id } = req.body;
+    db.query(
+        "UPDATE produtos SET nome = ?, categoria = ?, quantidade=? ,preco = ? WHERE id = ?",
+        [nome, categoria, parseFloat(preco), quantidade, id],
+        (erro, resultado) => {
+            if (erro) {
+                console.log("Erro na query:", erro);
+                return res.status(500).send("Erro ao atualizar produto.");
+            }
+            res.send("Produto atualizado com sucesso.");
+        }
+    );
+});
 
 function authenticateToken(req: any, res: any, next: any) {
 
@@ -143,9 +160,8 @@ app.get("/dashboard", authenticateToken, (req, res) => {
 
     })
 })
-app.post("/editar", (req, res)=>{
 
-})
+
 app.get("/produto/:id", authenticateToken, (req, res) => {
     const { id } = req.params;
 
@@ -156,7 +172,7 @@ app.get("/produto/:id", authenticateToken, (req, res) => {
             return res.status(500).send("Erro ao procurar produto");
         }
 
-        console.log("Resultados da consulta:", resultados);
+       
 
 
         if (resultados.length === 0) {
@@ -193,7 +209,23 @@ const db = mySql2.createPool({
     database: "banco",
 })
 
-
+app.delete('/products/:id', (req, res) => {
+    const { id } = req.params;
+  
+    // Query SQL para excluir o produto
+    const query = 'DELETE FROM produtos WHERE id = ?';
+  
+    db.query(query, [id], (err, result) => {
+      if (err) {
+        console.error('Erro ao excluir produto', err);
+        return res.status(500).send('Erro ao excluir produto');
+      }
+  
+  
+      res.status(200).send('Produto excluído com sucesso!');
+    });
+  });
+  
 app.listen(3001, () => {
     console.log('rodando na porta 3001');
 })
