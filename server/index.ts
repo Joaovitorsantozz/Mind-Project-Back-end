@@ -3,6 +3,7 @@ import express from 'express';
 import mySql2, { RowDataPacket } from "mysql2";
 import multer from 'multer';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+require('dotenv').config(); 
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -105,7 +106,7 @@ app.post("/dashboard", authenticateToken, upload.single("imagem"), (req, res) =>
         })
 })
 
-app.post("/editar", upload.none(), (req, res) => {
+app.post("/editar",authenticateToken ,upload.none(),(req, res) => {
     const { nome, preco, categoria, quantidade, id } = req.body;
     db.query(
         "UPDATE produtos SET nome = ?, categoria = ?, quantidade=? ,preco = ? WHERE id = ?",
@@ -172,7 +173,7 @@ app.get("/produto/:id", authenticateToken, (req, res) => {
             return res.status(500).send("Erro ao procurar produto");
         }
 
-       
+
 
 
         if (resultados.length === 0) {
@@ -203,29 +204,29 @@ app.get("/produto/:id", authenticateToken, (req, res) => {
 
 
 const db = mySql2.createPool({
-    host: "localhost",
-    user: "root",
-    password: "password",
-    database: "banco",
-})
+    host: process.env.DB_HOST,       // Usando a variável de ambiente DB_HOST
+    user: process.env.DB_USER,       // Usando a variável de ambiente DB_USER
+    password: process.env.DB_PASSWORD, // Usando a variável de ambiente DB_PASSWORD
+    database: process.env.DB_NAME    // Usando a variável de ambiente DB_NAME
+});
 
 app.delete('/products/:id', (req, res) => {
     const { id } = req.params;
-  
-    // Query SQL para excluir o produto
+
+
     const query = 'DELETE FROM produtos WHERE id = ?';
-  
+
     db.query(query, [id], (err, result) => {
-      if (err) {
-        console.error('Erro ao excluir produto', err);
-        return res.status(500).send('Erro ao excluir produto');
-      }
-  
-  
-      res.status(200).send('Produto excluído com sucesso!');
+        if (err) {
+            console.error('Erro ao excluir produto', err);
+            return res.status(500).send('Erro ao excluir produto');
+        }
+
+
+        res.status(200).send('Produto excluído com sucesso!');
     });
-  });
-  
+});
+
 app.listen(3001, () => {
     console.log('rodando na porta 3001');
 })
