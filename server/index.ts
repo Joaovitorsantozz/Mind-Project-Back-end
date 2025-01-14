@@ -1,3 +1,4 @@
+
 import express from 'express';
 import mySql2, { RowDataPacket } from "mysql2";
 import multer from 'multer';
@@ -87,7 +88,7 @@ app.post("/login", (req, res) => {
     });
 });
 
-app.post("/dashboard",authenticateToken, upload.single("imagem"), (req, res) => {
+app.post("/dashboard", authenticateToken, upload.single("imagem"), (req, res) => {
     const { nome, preco, categoria, quantidade, dataFabricacao } = req.body;
     const imagem = req.file;
 
@@ -103,30 +104,30 @@ app.post("/dashboard",authenticateToken, upload.single("imagem"), (req, res) => 
 })
 
 function authenticateToken(req: any, res: any, next: any) {
-   
+
     const token = req.headers['authorization'];
 
-   
+
     if (!token) {
         return res.status(401).json({ message: "Token não fornecido" });
     }
 
- 
+
     const tokenSemPrefixo = token.replace("Bearer ", "");
 
-    
-    jwt.verify(tokenSemPrefixo, "sua-chave-secreta", (err:any, decoded:any) => {
-     
+
+    jwt.verify(tokenSemPrefixo, "sua-chave-secreta", (err: any, decoded: any) => {
+
         if (err) {
             return res.status(403).json({ message: "Token inválido" });
         }
 
-     
-        req.user = decoded as JwtPayload; 
-        next(); 
+
+        req.user = decoded as JwtPayload;
+        next();
     });
 }
-app.get("/dashboard", authenticateToken,(req, res) => {
+app.get("/dashboard", authenticateToken, (req, res) => {
     db.query("SELECT * FROM produtos", (erro, resultados: any[]) => {
         if (erro) {
             console.log(erro);
@@ -142,13 +143,13 @@ app.get("/dashboard", authenticateToken,(req, res) => {
 
     })
 })
-app.post("/editar",(req,res){
-    
+app.post("/editar", (req, res)=>{
+
 })
-app.get("/produto/:id",authenticateToken, (req, res) => {
+app.get("/produto/:id", authenticateToken, (req, res) => {
     const { id } = req.params;
 
-  
+
     db.query("SELECT * FROM produtos WHERE id=?", [id], (erro, resultados: RowDataPacket[]) => {
         if (erro) {
             console.error("Erro na consulta:", erro);
@@ -157,12 +158,12 @@ app.get("/produto/:id",authenticateToken, (req, res) => {
 
         console.log("Resultados da consulta:", resultados);
 
-       
+
         if (resultados.length === 0) {
             return res.status(404).send("Produto não encontrado");
         }
 
-      
+
         const produtosImagem = resultados.map(produto => {
             console.log("Produto antes de converter imagem:", produto);
 
@@ -171,7 +172,7 @@ app.get("/produto/:id",authenticateToken, (req, res) => {
                 produto.image = `data:image/jpeg;base64,${imageBase64}`;
             } else {
                 console.warn(`Imagem ausente ou inválida para o produto ID ${produto.id}`);
-                produto.image = null; 
+                produto.image = null;
             }
 
             return produto;
@@ -179,7 +180,7 @@ app.get("/produto/:id",authenticateToken, (req, res) => {
 
         console.log("Produtos com imagem convertida:", produtosImagem);
 
-        
+
         res.json(produtosImagem[0]);
     });
 });
@@ -196,4 +197,3 @@ const db = mySql2.createPool({
 app.listen(3001, () => {
     console.log('rodando na porta 3001');
 })
-
