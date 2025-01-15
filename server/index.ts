@@ -51,7 +51,7 @@ app.post("/register", (req, res) => {
                         if (err) {
                             res.send(err);
                         } else {
-                            res.send({ msg: "Cadastrado com sucesso" });
+                            res.status(201).json({ msg: "Cadastrado com sucesso", redirectTo: "/login" });
                         }
                     });
                 })
@@ -92,12 +92,12 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/dashboard", authenticateToken, upload.single("imagem"), (req, res) => {
-    const { nome, preco, categoria, quantidade, dataFabricacao } = req.body;
+    const { nome, preco, categoria, quantidade, dataFabricacao,descricao} = req.body;
     const imagem = req.file;
 
 
-    db.query("INSERT INTO produtos (nome,categoria,datafabricacao,quantidade,image,preco) VALUES (?,?,?,?,?,?)",
-        [nome, categoria, dataFabricacao, quantidade, imagem?.buffer, preco], (erro, resultado) => {
+    db.query("INSERT INTO produtos (nome,categoria,datafabricacao,quantidade,image,preco,descricao) VALUES (?,?,?,?,?,?,?)",
+        [nome, categoria, dataFabricacao, quantidade, imagem?.buffer, preco,descricao], (erro, resultado) => {
             if (erro) {
                 console.log(erro);
                 return res.status(500).send("Erro ao cadastrar item no banco de dados.");
@@ -107,18 +107,18 @@ app.post("/dashboard", authenticateToken, upload.single("imagem"), (req, res) =>
 })
 
 app.post("/editar",authenticateToken ,upload.none(),(req, res) => {
-    const { nome, preco, categoria, quantidade, id } = req.body;
+    const { nome, preco, categoria, quantidade, id,descricao} = req.body;
     db.query(
-        "UPDATE produtos SET nome = ?, categoria = ?, quantidade=? ,preco = ? WHERE id = ?",
-        [nome, categoria, parseFloat(preco), quantidade, id],
+        "UPDATE produtos SET nome = ?, categoria = ?, quantidade = ?, preco = ?, descricao = ? WHERE id = ?",
+        [nome, categoria, quantidade, parseFloat(preco), descricao, id],
         (erro, resultado) => {
-            if (erro) {
-                console.log("Erro na query:", erro);
-                return res.status(500).send("Erro ao atualizar produto.");
-            }
-            res.send("Produto atualizado com sucesso.");
+          if (erro) {
+            console.log("Erro na query:", erro);
+            return res.status(500).send("Erro ao atualizar produto.");
+          }
+          res.send("Produto atualizado com sucesso.");
         }
-    );
+      );
 });
 
 function authenticateToken(req: any, res: any, next: any) {
