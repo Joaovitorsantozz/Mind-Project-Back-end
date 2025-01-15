@@ -22,3 +22,5 @@ digite npm run devStart para iniciar a API, se tudo correr bem aparecera uma men
 - caso a API do back end não esteja rodando ao mesmo tempo do front end, ocorrerá problemas de validação e de exibição de itens.
 
 - o projeto contem um token de validação de rotas, portanto após realizar o login,o projeto ira correr por 1h, e após isso será necessário refazer o login para continuar funcionando novamente.
+
+-o dump está dentro da pasta banco dump, e caso seja útil o gerenciador de mysql que estou usando se chama MySQL Workbench versão 8.0
