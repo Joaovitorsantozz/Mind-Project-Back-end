@@ -3,7 +3,10 @@ import express from 'express';
 import mySql2, { RowDataPacket } from "mysql2";
 import multer from 'multer';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import sharp from 'sharp';
+import rateLimit from 'express-rate-limit';
 require('dotenv').config(); 
+
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -19,9 +22,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const storage = multer.memoryStorage();
 const upload = multer({
-    limits: { fileSize: 50 * 1024 * 1024 }  // Limite de 50MB
+    limits: { fileSize: 50 * 1024 * 1024 }
 });
-
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, 
+    max: 5, 
+    message: "Muitas tentativas de login. Tente novamente mais tarde.",
+    standardHeaders: true, 
+    legacyHeaders: false, 
+});
 
 type Produto = {
     id: number;
@@ -62,7 +71,7 @@ app.post("/register", (req, res) => {
     });
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", loginLimiter,(req, res) => {
 
     const email = req.body.email;
     const password = req.body.password;
@@ -78,7 +87,7 @@ app.post("/login", (req, res) => {
             const user = result[0] as RowDataPacket;
             bcrypt.compare(password, user.password, (erro: Error, result: String) => {
                 if (result) {
-                    const token = jwt.sign({ id: 1, email }, "sua-chave-secreta", { expiresIn: "1h" });
+                    const token = jwt.sign({ id: 1, email }, "sua-chave-secreta", { expiresIn: "3h" });
                     return res.json({ msg: "Logado com sucesso", token });
 
                 } else {
@@ -204,10 +213,10 @@ app.get("/produto/:id", authenticateToken, (req, res) => {
 
 
 const db = mySql2.createPool({
-    host: process.env.DB_HOST,       // Usando a variável de ambiente DB_HOST
-    user: process.env.DB_USER,       // Usando a variável de ambiente DB_USER
-    password: process.env.DB_PASSWORD, // Usando a variável de ambiente DB_PASSWORD
-    database: process.env.DB_NAME    // Usando a variável de ambiente DB_NAME
+    host: process.env.DB_HOST,      
+    user: process.env.DB_USER,     
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME  
 });
 
 app.delete('/products/:id', (req, res) => {
@@ -226,7 +235,10 @@ app.delete('/products/:id', (req, res) => {
         res.status(200).send('Produto excluído com sucesso!');
     });
 });
-
+app.get('/', (req, res) => {
+    res.redirect('/login');
+});
+  
 app.listen(3001, () => {
     console.log('rodando na porta 3001');
 })
